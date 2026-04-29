@@ -11,7 +11,7 @@
       <!-- 开始页面 -->
       <section v-if="currentStep === 'start'" class="start-page">
         <div class="welcome-box">
-          <h2>欢迎参加 SISCONTI 测试</h2>
+          <h2>欢迎来到 SISCONTI 测试</h2>
           <p class="test-count">该测试包含 {{ totalQuestions }} 道题目</p>
           <p class="description">该题目情景只针对二次元哦~ 与现实无关 ，仅供娱乐，请勿当真~</p>
           <button @click="startTest" class="btn-primary">开始测试</button>
@@ -65,20 +65,42 @@
         </div>
       </section>
 
+      <!-- 中间提示页面（第18题后） -->
+      <section v-else-if="currentStep === 'warning'" class="warning-page">
+        <div class="warning-box">
+          <div class="warning-icon">⚠️</div>
+          <h2>即将进入极端题目</h2>
+          <p class="warning-text">
+            接下来的题目将会极端一点，您可以选择跳过题目，直接得出结果。<br>
+            也可以选择继续作答，得出更丰富的结果。
+          </p>
+          <p class="warning-note">⚠️ 所有情景仅针对二次元，与现实无关，请勿当真~</p>
+          <div class="warning-buttons">
+            <button @click="finishNow" class="btn-primary">
+              就这样结束，得出结果
+            </button>
+            <button @click="continueTest" class="btn-continue">
+              还想继续答题 →
+            </button>
+          </div>
+          <button @click="goBack" class="btn-back">← 返回上一题</button>
+        </div>
+      </section>
+
       <!-- 结果页面 -->
       <section v-else-if="currentStep === 'result'" class="result-page">
         <div class="result-container">
           <!-- 五维参数显示 -->
           <div class="params-section">
-            <h2>你的五维参数（平均值）</h2>
-            <p class="avg-note">每题最高10分，你的平均得分</p>
+            <h2>你的五维参数（累加得分）</h2>
+            <p class="avg-note">各维度累计得分</p>
             <div class="params-chart">
               <div class="param-row" v-for="(dim, index) in result.currentParams" :key="index">
                 <span class="dim-label">{{ dim.name }}</span>
                 <div class="param-bar">
                   <div class="param-fill" :style="{ width: dim.percentage + '%' }"></div>
                 </div>
-                <span class="dim-value">{{ dim.value }} <span class="raw-value">/ {{ dim.rawValue }}分</span></span>
+                <span class="dim-value">{{ dim.rawValue }} <span class="raw-value">分</span></span>
               </div>
             </div>
           </div>
@@ -145,13 +167,14 @@ export default {
     return {
       title: 'SISCONTI - 你是什么样的妹控？',
       subtitle: '五维性格测试',
-      currentStep: 'start', // start, testing, result
+      currentStep: 'start', // start, testing, warning, result
       currentQuestionIndex: 0,
       questions: [],
       answers: {}, // { questionId: optionId }
       selectedAnswer: null,
       result: null,
-      brotherTypes: []
+      brotherTypes: [],
+      warningShown: false // 是否已显示过警告页面
     }
   },
   computed: {
@@ -199,6 +222,13 @@ export default {
       this.answers[this.currentQuestion.id] = option.id
     },
     nextQuestion() {
+      // 第18题后显示警告页面（只显示一次）
+      if (this.currentQuestionIndex === 17 && !this.warningShown) {
+        this.warningShown = true
+        this.currentStep = 'warning'
+        return
+      }
+      
       if (this.currentQuestionIndex < this.totalQuestions - 1) {
         this.currentQuestionIndex++
         this.loadQuestion()
@@ -207,17 +237,41 @@ export default {
       }
     },
     previousQuestion() {
+      // 如果在警告页面，返回到第18题
+      if (this.currentStep === 'warning') {
+        this.currentQuestionIndex = 17
+        this.loadQuestion()
+        this.currentStep = 'testing'
+        return
+      }
+      
       if (this.currentQuestionIndex > 0) {
         this.currentQuestionIndex--
         this.loadQuestion()
       }
+    },
+    // 显示中间结果
+    finishNow() {
+      this.submitTest()
+    },
+    // 继续答题
+    continueTest() {
+      this.currentStep = 'testing'
+      this.currentQuestionIndex = 18
+      this.loadQuestion()
+    },
+    // 返回上一题
+    goBack() {
+      this.currentQuestionIndex = 17
+      this.loadQuestion()
+      this.currentStep = 'testing'
     },
     submitTest() {
       // 分析答题结果
       const analysisResult = analyzeAnswers(this.answers, this.questions)
       
       // 获取参数可视化数据
-      const currentParams = getVisualizationData(analysisResult.params, analysisResult.avgParams, analysisResult.topThreeTypes)
+      const currentParams = getVisualizationData(analysisResult.params, analysisResult.topThreeTypes)
       
       this.result = {
         ...analysisResult,
@@ -232,6 +286,7 @@ export default {
       this.answers = {}
       this.selectedAnswer = null
       this.result = null
+      this.warningShown = false
     },
     exportResult() {
       if (!this.result) return
@@ -698,6 +753,86 @@ export default {
 .btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ===== 警告页面 ===== */
+.warning-page {
+  width: 100%;
+  max-width: 600px;
+}
+
+.warning-box {
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  animation: slideUp 0.5s ease-out;
+}
+
+.warning-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.warning-box h2 {
+  color: #333;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.warning-text {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.warning-note {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+  padding: 0.8rem;
+  background: #fff5f5;
+  border-radius: 8px;
+}
+
+.warning-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-continue {
+  padding: 0.8rem 2rem;
+  border: 2px solid #4ade80;
+  background: white;
+  color: #4ade80;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-continue:hover {
+  background: #f0fff0;
+  transform: translateY(-2px);
+}
+
+.btn-back {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: #999;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+  color: #667eea;
 }
 
 /* ===== 动画 ===== */
