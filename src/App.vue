@@ -105,24 +105,43 @@
             </div>
           </div>
 
-          <!-- 三个最接近的类型 -->
-          <div class="types-section">
-            <h2>最接近的三个妹控类型</h2>
-            <div class="types-container">
-              <div
-                class="type-card"
-                v-for="(type, index) in result.topThreeTypes"
-                :key="index"
-                :class="{ 'rank-1': index === 0, 'rank-2': index === 1, 'rank-3': index === 2 }"
-              >
-                <div class="type-rank-badge">
-                  <span v-if="index === 0">🥇</span>
-                  <span v-else-if="index === 1">🥈</span>
-                  <span v-else>🥉</span>
-                  第{{ index + 1 }}位
+          <!-- 主类型结果 -->
+          <div class="main-type-section">
+            <h2>🏆 你的妹控类型</h2>
+            <div class="main-type-card" v-if="result.mainType">
+              <div class="main-type-rank">🥇 主型</div>
+              <div class="main-type-name">{{ result.mainType.name }}</div>
+              <div class="main-type-score">{{ result.mainType.similarity }}% 匹配</div>
+              <p class="type-description">{{ result.mainType.description }}</p>
+              <!-- 五维雷达条 -->
+              <div class="main-type-params">
+                <div v-for="(val, idx) in result.mainType.params" :key="idx" class="main-param-item">
+                  <span class="main-param-label">{{ ['爱', '控', '理', '幻', '专'][idx] }}</span>
+                  <div class="main-param-bar">
+                    <div class="main-param-fill" :style="{ width: val * 10 + '%' }"></div>
+                  </div>
+                  <span class="main-param-val">{{ val }}</span>
                 </div>
-                <div class="type-name">{{ type.name }}</div>
-                <div class="type-similarity">{{ type.similarity }}% 匹配</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 副人格（副结果） -->
+          <div class="sub-types-section">
+            <h2>💫 副人格</h2>
+            <p class="sub-types-note">你性格中潜在的其他倾向</p>
+            <div class="sub-types-container">
+              <div
+                class="sub-type-card"
+                v-for="(type, index) in result.topThreeTypes.slice(1)"
+                :key="index"
+                :class="{ 'rank-2': index === 0, 'rank-3': index === 1 }"
+              >
+                <div class="sub-type-rank-badge">
+                  {{ index === 0 ? '🥈' : '🥉' }} 第{{ index + 2 }}位
+                </div>
+                <div class="sub-type-name">{{ type.name }}</div>
+                <div class="sub-type-similarity">{{ type.similarity }}% 匹配</div>
                 <div class="type-params-mini">
                   <span v-for="(val, idx) in type.params" :key="idx" class="param-mini-item">
                     {{ ['爱', '控', '理', '幻', '专'][idx] }}:{{ val }}
@@ -702,6 +721,171 @@ export default {
   transition: width 0.5s ease;
 }
 
+/* ===== 主类型结果 ===== */
+.main-type-section {
+  margin-top: 2rem;
+}
+
+.main-type-section h2 {
+  color: #8B6914;
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.main-type-card {
+  background: linear-gradient(135deg, #fffef0, #fffbf0);
+  border: 3px solid #D4A017;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(212, 160, 23, 0.3);
+  animation: glowPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+  from { box-shadow: 0 8px 30px rgba(212, 160, 23, 0.25); }
+  to { box-shadow: 0 12px 40px rgba(212, 160, 23, 0.45); }
+}
+
+.main-type-rank {
+  font-size: 1.1rem;
+  color: #b8860b;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.main-type-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #8B6914;
+  margin-bottom: 0.5rem;
+}
+
+.main-type-score {
+  font-size: 1.4rem;
+  color: #D4A017;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.main-type-params {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.main-param-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.main-param-label {
+  width: 28px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #8B6914;
+}
+
+.main-param-bar {
+  flex: 1;
+  height: 10px;
+  background: rgba(139, 105, 20, 0.15);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.main-param-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #D4A017, #C9A86C);
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+
+.main-param-val {
+  width: 24px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #8B6914;
+  text-align: right;
+}
+
+/* ===== 副人格区域 ===== */
+.sub-types-section {
+  margin-top: 2.5rem;
+}
+
+.sub-types-section h2 {
+  color: #333;
+  font-size: 1.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.sub-types-note {
+  color: #888;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.sub-types-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.sub-type-card {
+  background: linear-gradient(135deg, #f8f8ff, #ffffff);
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 1.2rem;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.sub-type-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(102, 126, 23, 0.15);
+}
+
+.sub-type-card.rank-2 {
+  border-color: #c0c0c0;
+}
+
+.sub-type-card.rank-3 {
+  border-color: #cd7f32;
+}
+
+.sub-type-rank-badge {
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  padding: 0.2rem 0.7rem;
+  background: rgba(150, 150, 150, 0.1);
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.sub-type-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #444;
+  margin-bottom: 0.3rem;
+}
+
+.sub-type-similarity {
+  font-size: 1rem;
+  color: #764ba2;
+  margin-bottom: 0.6rem;
+  font-weight: bold;
+}
+
 .result-actions {
   display: flex;
   gap: 1rem;
@@ -855,6 +1039,14 @@ export default {
 
   .types-container {
     grid-template-columns: 1fr;
+  }
+
+  .sub-types-container {
+    grid-template-columns: 1fr;
+  }
+
+  .main-type-name {
+    font-size: 1.4rem;
   }
 
   .param-row {
