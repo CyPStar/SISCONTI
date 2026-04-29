@@ -176,7 +176,7 @@
         </div>
       </section>
     </main>
-    <footer class="app-footer">Power by CyP</footer>
+    <footer class="app-footer">Powered by CyP</footer>
     </div>
   </div>
 </template>
