@@ -176,6 +176,7 @@
         </div>
       </section>
     </main>
+    <footer class="app-footer">Power by CyP</footer>
     </div>
   </div>
 </template>
@@ -1153,6 +1154,15 @@ export default {
   .result-actions {
     flex-direction: column;
   }
+}
+
+/* ===== 页脚 ===== */
+.app-footer {
+  text-align: center;
+  padding: 1rem;
+  color: #bbb;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
 }
 </style>
 
