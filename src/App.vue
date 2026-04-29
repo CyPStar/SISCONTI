@@ -102,7 +102,7 @@
 
       <!-- 结果页面 -->
       <section v-else-if="currentStep === 'result'" class="result-page">
-        <div class="result-container">
+        <div class="result-container" ref="resultContainer">
           <!-- 五维参数显示 -->
           <div class="params-section">
             <h2>你的五维参数（累加得分）</h2>
@@ -184,6 +184,7 @@
 import questions from './data/questions.json'
 import brotherTypes from './data/brotherTypes.json'
 import { analyzeAnswers, getVisualizationData } from './utils/analysis'
+import domtoimage from 'dom-to-image-more'
 
 // 五维参数定义
 const DIMENSIONS = [
@@ -342,35 +343,32 @@ export default {
       this.result = null
       this.warningShown = false
     },
-    exportResult() {
-      if (!this.result) return
-      
-      const reportData = {
-        timestamp: new Date().toLocaleString(),
-        totalQuestions: this.totalQuestions,
-        answeredQuestions: Object.keys(this.answers).length,
-        params: {
-          attachment: this.result.params[0],
-          control: this.result.params[1],
-          rationality: this.result.params[2],
-          fantasy: this.result.params[3],
-          exclusivity: this.result.params[4]
-        },
-        topThreeTypes: this.result.topThreeTypes.map(t => ({
-          name: t.name,
-          description: t.description,
-          similarity: t.similarity
-        }))
+    async exportResult() {
+      if (!this.result || !this.$refs.resultContainer) return
+
+      const el = this.$refs.resultContainer
+      const originalBg = el.style.background
+      try {
+        // 临时设为实心底色，截图后恢复
+        el.style.background = '#fffceb'
+        const dataUrl = await domtoimage.toPng(el, {
+          quality: 1,
+          width: el.scrollWidth * 2,
+          height: el.scrollHeight * 2,
+          style: {
+            transform: 'scale(2)',
+            transformOrigin: 'top left'
+          }
+        })
+        const link = document.createElement('a')
+        link.download = '我的妹控测试结果.png'
+        link.href = dataUrl
+        link.click()
+      } catch (e) {
+        console.error('截图失败:', e)
+      } finally {
+        el.style.background = originalBg
       }
-      
-      const dataStr = JSON.stringify(reportData, null, 2)
-      const dataBlob = new Blob([dataStr], { type: 'application/json' })
-      const url = URL.createObjectURL(dataBlob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `SISCONTI-result-${Date.now()}.json`
-      link.click()
-      URL.revokeObjectURL(url)
     }
   },
   mounted() {
@@ -525,7 +523,7 @@ export default {
   background: rgba(139, 105, 20, 0.15);
   border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 0.5rem;
+  margin-right: 0.8rem;
 }
 
 .progress-fill {
@@ -565,8 +563,8 @@ export default {
 
 .option-btn {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
   padding: 1.2rem;
   border: 2px solid rgba(212, 160, 23, 0.25);
   background: rgba(255, 255, 250, 0.9);
@@ -596,7 +594,7 @@ export default {
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: bold;
-  margin-bottom: 0.5rem;
+  margin-right: 0.8rem;
 }
 
 .option-text {
@@ -732,7 +730,7 @@ export default {
   font-size: 0.85rem;
   color: #667eea;
   font-weight: bold;
-  margin-bottom: 0.5rem;
+  margin-right: 0.8rem;
 }
 
 .type-rank-badge {
@@ -764,7 +762,7 @@ export default {
   font-size: 1.3rem;
   font-weight: bold;
   color: #000;
-  margin-bottom: 0.5rem;
+  margin-right: 0.8rem;
 }
 
 .type-similarity {
@@ -841,14 +839,14 @@ export default {
   font-size: 1.1rem;
   color: #b8860b;
   font-weight: bold;
-  margin-bottom: 0.5rem;
+  margin-right: 0.8rem;
 }
 
 .main-type-name {
   font-size: 1.8rem;
   font-weight: bold;
   color: #8B6914;
-  margin-bottom: 0.5rem;
+  margin-right: 0.8rem;
 }
 
 .main-type-score {
