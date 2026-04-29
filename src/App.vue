@@ -1,6 +1,19 @@
 <template>
-  <div class="sisconti-container">
-    <!-- 头部 -->
+  <div class="app-wrapper">
+    <!-- 动态背景层 -->
+    <div class="bg-layer">
+      <div
+        v-for="(bg, index) in bgImages"
+        :key="index"
+        class="bg-slide"
+        :class="{ active: currentBgIndex === index }"
+        :style="{ backgroundImage: `url(${bg})` }"
+      ></div>
+    </div>
+
+    <!-- 内容层 -->
+    <div class="sisconti-container">
+      <!-- 头部 -->
     <header class="header">
       <h1>{{ title }}</h1>
       <p class="subtitle">{{ subtitle }}</p>
@@ -163,6 +176,7 @@
         </div>
       </section>
     </main>
+    </div>
   </div>
 </template>
 
@@ -193,7 +207,17 @@ export default {
       selectedAnswer: null,
       result: null,
       brotherTypes: [],
-      warningShown: false // 是否已显示过警告页面
+      warningShown: false, // 是否已显示过警告页面
+      // 动态背景
+      bgImages: [
+        new URL('./assets/ysf.png', import.meta.url).href,
+        new URL('./assets/ysf2.png', import.meta.url).href,
+        new URL('./assets/ysf3.png', import.meta.url).href,
+        new URL('./assets/ysf4.png', import.meta.url).href,
+        new URL('./assets/ysf5.png', import.meta.url).href
+      ],
+      currentBgIndex: 0,
+      bgTimer: null
     }
   },
   computed: {
@@ -227,6 +251,17 @@ export default {
     }
   },
   methods: {
+    startBgSlideshow() {
+      this.bgTimer = setInterval(() => {
+        this.currentBgIndex = (this.currentBgIndex + 1) % this.bgImages.length
+      }, 5000)
+    },
+    stopBgSlideshow() {
+      if (this.bgTimer) {
+        clearInterval(this.bgTimer)
+        this.bgTimer = null
+      }
+    },
     startTest() {
       this.currentStep = 'testing'
       this.loadQuestion()
@@ -341,6 +376,10 @@ export default {
   mounted() {
     this.questions = questions
     this.brotherTypes = brotherTypes
+    this.startBgSlideshow()
+  },
+  beforeUnmount() {
+    this.stopBgSlideshow()
   }
 }
 </script>
@@ -352,30 +391,77 @@ export default {
   box-sizing: border-box;
 }
 
-.sisconti-container {
+/* ===== 最外层包装 ===== */
+.app-wrapper {
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  overflow-x: hidden;
+}
+
+/* ===== 动态背景层（底层，不阻挡交互）===== */
+.bg-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bg-slide {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 4s ease-in-out;
+  animation: bgDrift 20s ease-in-out infinite alternate;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.bg-slide.active {
+  opacity: 1;
+}
+
+@keyframes bgDrift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(-3%, -2%) scale(1.05); }
+}
+
+/* ===== 内容层（在背景之上，可交互）===== */
+.sisconti-container {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: rgba(255, 253, 230, 0.75);
 }
 
 .header {
-  background: rgba(0, 0, 0, 0.1);
-  color: white;
+  background: rgba(255, 248, 220, 0.95);
+  color: #000;
   padding: 2rem;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(139, 105, 20, 0.15);
+  border-bottom: 2px solid #D4A017;
 }
 
 .header h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
   font-weight: bold;
+  color: #000;
 }
 
 .subtitle {
   font-size: 1.1rem;
-  opacity: 0.9;
+  color: #333;
 }
 
 .main-content {
@@ -394,29 +480,30 @@ export default {
 }
 
 .welcome-box {
-  background: white;
+  background: rgba(255, 252, 235, 0.95);
   padding: 3rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(139, 105, 20, 0.15);
   text-align: center;
   animation: slideUp 0.5s ease-out;
+  border: 1px solid rgba(212, 160, 23, 0.3);
 }
 
 .welcome-box h2 {
-  color: #333;
+  color: #000;
   font-size: 1.8rem;
   margin-bottom: 1rem;
 }
 
 .test-count {
-  color: #667eea;
+  color: #8B6914;
   font-size: 1.1rem;
   font-weight: bold;
   margin-bottom: 1rem;
 }
 
 .description {
-  color: #999;
+  color: #555;
   font-size: 0.9rem;
   margin: 1.5rem 0 2rem 0;
   line-height: 1.6;
@@ -434,35 +521,36 @@ export default {
 
 .progress-bar {
   width: 100%;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
+  height: 8px;
+  background: rgba(139, 105, 20, 0.15);
+  border-radius: 4px;
   overflow: hidden;
   margin-bottom: 0.5rem;
 }
 
 .progress-fill {
   height: 100%;
-  background: white;
+  background: linear-gradient(90deg, #D4A017, #C9A86C);
   transition: width 0.3s ease;
 }
 
 .progress-text {
-  color: white;
+  color: #333;
   text-align: right;
   font-size: 0.9rem;
 }
 
 .question-card {
-  background: white;
+  background: rgba(255, 252, 235, 0.95);
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(139, 105, 20, 0.12);
   animation: slideUp 0.5s ease-out;
+  border: 1px solid rgba(212, 160, 23, 0.2);
 }
 
 .question-title {
-  color: #333;
+  color: #000;
   font-size: 1.4rem;
   margin-bottom: 2rem;
   line-height: 1.6;
@@ -480,9 +568,9 @@ export default {
   flex-direction: column;
   align-items: flex-start;
   padding: 1.2rem;
-  border: 2px solid #e0e0e0;
-  background: white;
-  border-radius: 8px;
+  border: 2px solid rgba(212, 160, 23, 0.25);
+  background: rgba(255, 255, 250, 0.9);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
@@ -490,19 +578,19 @@ export default {
 }
 
 .option-btn:hover {
-  border-color: #667eea;
-  background: #f5f5ff;
+  border-color: #D4A017;
+  background: rgba(255, 248, 220, 0.9);
 }
 
 .option-btn.selected {
-  border-color: #667eea;
-  background: #f0f4ff;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  border-color: #D4A017;
+  background: rgba(255, 245, 180, 0.7);
+  box-shadow: 0 4px 12px rgba(212, 160, 23, 0.25);
 }
 
 .option-label {
   display: inline-block;
-  background: #667eea;
+  background: #D4A017;
   color: white;
   padding: 0.3rem 0.8rem;
   border-radius: 20px;
@@ -512,7 +600,7 @@ export default {
 }
 
 .option-text {
-  color: #333;
+  color: #000;
 }
 
 .navigation {
@@ -530,9 +618,10 @@ export default {
 }
 
 .result-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 252, 235, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(139, 105, 20, 0.12);
+  border: 1px solid rgba(212, 160, 23, 0.2);
   padding: 2.5rem;
   animation: slideUp 0.5s ease-out;
 }
@@ -540,10 +629,10 @@ export default {
 /* 参数部分 */
 .params-section h2,
 .types-section h2 {
-  color: #333;
+  color: #000;
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #D4A017;
   padding-bottom: 1rem;
 }
 
@@ -561,7 +650,7 @@ export default {
 
 .dim-label {
   font-weight: bold;
-  color: #333;
+  color: #000;
 }
 
 .param-bar {
@@ -573,13 +662,13 @@ export default {
 
 .param-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #D4A017, #C9A86C);
   transition: width 0.3s ease;
 }
 
 .dim-value {
   text-align: right;
-  color: #667eea;
+  color: #8B6914;
   font-weight: bold;
   font-size: 1.1rem;
 }
@@ -674,13 +763,13 @@ export default {
 .type-name {
   font-size: 1.3rem;
   font-weight: bold;
-  color: #333;
+  color: #000;
   margin-bottom: 0.5rem;
 }
 
 .type-similarity {
   font-size: 1.2rem;
-  color: #667eea;
+  color: #8B6914;
   margin-bottom: 0.8rem;
   font-weight: bold;
 }
@@ -717,7 +806,7 @@ export default {
 
 .match-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #D4A017, #C9A86C);
   transition: width 0.5s ease;
 }
 
@@ -821,7 +910,7 @@ export default {
 }
 
 .sub-types-section h2 {
-  color: #333;
+  color: #000;
   font-size: 1.4rem;
   margin-bottom: 0.3rem;
 }
@@ -875,13 +964,13 @@ export default {
 .sub-type-name {
   font-size: 1.1rem;
   font-weight: bold;
-  color: #444;
+  color: #000;
   margin-bottom: 0.3rem;
 }
 
 .sub-type-similarity {
   font-size: 1rem;
-  color: #764ba2;
+  color: #8B6914;
   margin-bottom: 0.6rem;
   font-weight: bold;
 }
@@ -897,8 +986,8 @@ export default {
 .btn-primary {
   padding: 0.8rem 2rem;
   border: none;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  background: linear-gradient(135deg, #D4A017, #C9A86C);
+  color: #000;
   font-size: 1rem;
   font-weight: bold;
   border-radius: 8px;
@@ -909,7 +998,7 @@ export default {
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(212, 160, 23, 0.4);
 }
 
 .btn-primary:disabled {
@@ -919,9 +1008,9 @@ export default {
 
 .btn-secondary {
   padding: 0.8rem 2rem;
-  border: 2px solid #667eea;
+  border: 2px solid #D4A017;
   background: white;
-  color: #667eea;
+  color: #8B6914;
   font-size: 1rem;
   font-weight: bold;
   border-radius: 8px;
@@ -931,7 +1020,7 @@ export default {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #f5f5ff;
+  background: rgba(255, 248, 220, 0.9);
 }
 
 .btn-secondary:disabled {
@@ -946,10 +1035,11 @@ export default {
 }
 
 .warning-box {
-  background: white;
+  background: rgba(255, 252, 235, 0.95);
   padding: 3rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(139, 105, 20, 0.12);
+  border: 1px solid rgba(212, 160, 23, 0.2);
   text-align: center;
   animation: slideUp 0.5s ease-out;
 }
@@ -960,7 +1050,7 @@ export default {
 }
 
 .warning-box h2 {
-  color: #333;
+  color: #000;
   font-size: 1.8rem;
   margin-bottom: 1.5rem;
 }
